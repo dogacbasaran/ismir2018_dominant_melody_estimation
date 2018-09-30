@@ -1,4 +1,5 @@
-This folder contains the extracted HF0 features for each track in the dataset. Note that the files are in H5PY format and you can reach the data with 'HF0' tag. 
+This folder contains the extracted HF0 and CQT features for each track in the dataset. Note that the files are in H5PY format and you can reach the data with 'HF0' or 
+'cqt' tag. 
 
 Example:
 
