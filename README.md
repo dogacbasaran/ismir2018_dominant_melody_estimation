@@ -27,10 +27,28 @@ To compute dominant melody estimation with the trained CRNN model, you can run t
 
 An example usage exists inside the script. 
 
+## Source-Filter NMF training
+
+To create HF0 activation representation for a single track or the whole dataset, you can run the script
+
+> SF_NMF/extract_HF0.py
+
+An example usage exists inside the script.
+
 ## Creating Random Splits
 
+To create random train/validation/test splits, you can run the script
 
+> random_dataset_splits/random_splits.py
+
+An example usage exists in the ReadMe.txt file. Note that random splitting requires HF0 representations, hence one has to first create HF0 representations then is able to use this script.
 
 ## Training
 
-The model
+To train the model on the random splitted dataset, you can run the script
+
+> CRNN/C-RNN_model1.py
+
+Note that if you want to use a GPU for the training part (probably you should), you would need to adjust the code for that purpose!
+
+
