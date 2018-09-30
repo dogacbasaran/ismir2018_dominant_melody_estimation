@@ -1,0 +1,881 @@
+% -----------------------------------------------
+% Template for ISMIR Papers
+% 2018 version, based on previous ISMIR templates
+
+% Requirements :
+% * 6+n page length maximum
+% * 4MB maximum file size
+% * Copyright note must appear in the bottom left corner of first page
+% * Clearer statement about citing own work in anonymized submission
+% (see conference website for additional details)
+% -----------------------------------------------
+
+\documentclass{article}
+\usepackage{ismir,amsmath,cite,url}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+% \usepackage{subfig}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{pstricks}
+\usepackage{epstopdf}
+\usepackage{subcaption}
+\usepackage{bm}
+\usepackage{cases}
+\usepackage{physics}
+\usepackage{bbm}
+\usepackage{empheq}
+\usepackage[most]{tcolorbox}
+\usepackage{multirow}
+
+\usepackage[T3,T1]{fontenc}
+\DeclareSymbolFont{tipa}{T3}{cmr}{m}{n}
+\DeclareMathAccent{\invbreve}{\mathalpha}{tipa}{16}
+
+\graphicspath{{figs/}} % Graphics will be here
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=red, colback=white, boxrule=1pt,
+    #1}
+
+% \newcommand{\gp}[1]{{\textcolor{red}{#1}}}
+\newcommand{\gp}[1]{{\textcolor{black}{#1}}}
+% \newcommand{\gpcor}[2]{{\textcolor{red}{[#1 $\rightarrow$ #2]}}}
+\newcommand{\gpcor}[2]{{\textcolor{black}{#2}}}
+
+% \newcommand{\se}[1]{{\textcolor{blue}{#1}}}
+\newcommand{\se}[1]{{\textcolor{black}{#1}}}
+% \newcommand{\secor}[2]{{\textcolor{blue}{[#1 $\rightarrow$ #2]}}}
+\newcommand{\secor}[2]{{\textcolor{black}{#2}}}
+%\newcommand{\secmt}[1]{{\textcolor{blue}{[SE: #1]}}}
+\newcommand{\secmt}[1]{}
+
+% %\newcommand{\db}[1]{{\textcolor{blue}{#1}}}
+\newcommand{\db}[1]{{\textcolor{black}{#1}}}
+% \newcommand{\dbcor}[2]{{\textcolor{blue}{[#1 $\rightarrow$ #2]}}}
+\newcommand{\dbcor}[2]{{\textcolor{black}{#2}}}
+
+% \newcommand{\jb}[1]{{\textcolor{green}{#1}}}
+\newcommand{\jb}[1]{{\textcolor{black}{#1}}}
+% \newcommand{\jbcor}[2]{{\textcolor{green}{[#1 $\rightarrow$ #2]}}}
+\newcommand{\jbcor}[2]{{\textcolor{black}{#2}}}
+
+% Title.
+% ------
+\title{Main Melody Extraction \\ with source-filter NMF and CRNN}
+
+% Note: Please do NOT use \thanks or a \footnote in any of the author markup
+
+% Single address
+% To use with only one author or several with the same address
+% ---------------
+%\oneauthor
+% {Names should be omitted for double-blind reviewing}
+% {Affiliations should be omitted for double-blind reviewing}
+
+% Two addresses
+% --------------
+%\twoauthors
+%  {First author} {School \\ Department}
+%  {Second author} {Company \\ Address}
+
+%% To make customize author list in Creative Common license, uncomment and customize the next line
+%  \def\authorname{First Author, Second Author}
+
+
+% Three addresses
+% --------------
+% \threeauthors
+%   {Dogac Basaran} {Affiliation1 \\ {\tt author1@ismir.edu}}
+%   {Second Author} {\bf Retain these fake authors in\\\bf submission to preserve the formatting}
+%   {Third Author} {Affiliation3 \\ {\tt author3@ismir.edu}}
+
+
+%% To make customize author list in Creative Common license, uncomment and customize the next line
+%  \def\authorname{First Author, Second Author, Third Author}
+
+% Four or more addresses
+% OR alternative format for large number of co-authors
+% ------------
+\multauthor
+{Dogac Basaran$^1$ \hspace{1cm} Slim Essid$^2$ \hspace{1cm} Geoffroy Peeters$^1$}{ \\
+$^1$ CNRS, Ircam Lab, Sorbonne Université, Ministère de la Culture, F-75004 Paris, France\\
+$^2$ LTCI, T\'el\'ecom ParisTech, Universit\'e Paris Saclay, Paris, France\\
+{\tt\small dogac.basaran@ircam.fr}
+}
+\def\authorname{Dogac Basaran, Slim Essid, Geoffroy Peeters}
+
+% \multauthor
+% {Dogac Basaran$^1$ \hspace{1cm} Slim Essid$^2$ \hspace{1cm} Geoffroy Peteers$^1$} { \bfseries{Fourth author$^3$ \hspace{1cm} Fifth author$^2$ \hspace{1cm} Sixth author$^1$}\\
+%  $^1$ Department of Computer Science, University , Country\\
+% $^2$ International Laboratories, City, Country\\
+% $^3$  Company, Address\\
+% {\tt\small CorrespondenceAuthor@ismir.edu, PossibleOtherAuthor@ismir.edu}
+% }
+% \def\authorname{First author, Second author, Third author, Fourth author, Fifth author, Sixth author}
+
+
+\sloppy % please retain sloppy command for improved formatting
+
+\begin{document}
+\def\WFz{\mathbf{W}^{F_{0}}}
+\def\WFzf{\underline{\mathbf{W}}^{F_{0}}}
+\def\HFz{\mathbf{H}^{F_{0}}}
+\def\HFzf{\underline{\mathbf{H}}^{F_{0}}}
+\def\Wphi{\mathbf{W}^{\Phi}}
+\def\Wphif{\underline{\mathbf{W}}^{\Phi}}
+\def\Hphi{\mathbf{H}^{\Phi}}
+\def\Hphif{\underline{\mathbf{H}}^{\Phi}}
+\def\Wgamma{\mathbf{W}^{\Gamma}}
+\def\Wgammaf{\underline{\mathbf{W}}^{\Gamma}}
+\def\Hgamma{\mathbf{H}^{\Gamma}}
+\def\Hgammaf{\underline{\mathbf{H}}^{\Gamma}}
+\def\WB{\mathbf{W}^{B}}
+\def\WBf{\underline{\mathbf{W}}^{B}}
+\def\HB{\mathbf{H}^{B}}
+\def\HBf{\underline{\mathbf{H}}^{B}}
+\def\V{\mathbf{V}}
+\def\Vhat{\mathbf{\hat{V}}}
+\def\v{\mathbf{v}}
+\def\vhat{\mathbf{\hat{v}}}
+\def\bhphi{\mathbf{h}^{\Phi}}
+\def\hphi{h^{\Phi}}
+\def\hphit{\tilde{h}^{\Phi}}
+\def\hgamma{h^{\Gamma}}
+\def\hgammat{\tilde{h}^{\Gamma}}
+\def\wgamma{w^{\Gamma}}
+\def\wphi{w^{\Phi}}
+\def\wphit{\tilde{w}^{\Phi}}
+\def\hFz{h^{F_0}}
+\def\hFzt{\tilde{h}^{F_0}}
+\def\hB{h^{B}}
+\def\hBt{\tilde{h}^{B}}
+\def\wB{w^{B}}
+\def\wBt{\tilde{w}^{B}}
+\def\bhphit{\mathbf{\tilde{h}}^{\Phi}}
+\def\Hphit{\mathbf{\tilde{H}}^{\Phi}}
+\def\HFzt{\mathbf{\tilde{H}}^{F_{0}}}
+\def\HBt{\mathbf{\tilde{H}}^{B}}
+\def\WBt{\mathbf{\tilde{W}}^{B}}
+\def\Hgammat{\mathbf{\tilde{H}}^{\Gamma}}
+\def\Wphit{\mathbf{\tilde{W}}^{\Phi}}
+\def\vt{\tilde{v}}
+\newcommand{\RR}{\mathbb{R}}
+\def\sFz{s^{F_{0}}}
+\def\sB{s^{B}}
+\def\sphi{s^{\Phi}}
+\def\VFz{\mathbf{V}^{F_0}}
+\def\Vphi{\mathbf{V}^{\Phi}}
+\def\VB{\mathbf{V}^{B}}
+\newcommand{\conv}[1]{\smash{\overset{\scriptscriptstyle\smile}{#1}}}
+\newcommand{\conc}[1]{\smash{\overset{\scriptscriptstyle\frown}{#1}}}
+\def\G{\mathcal{G}}
+
+%
+\maketitle
+%
+\begin{abstract}
+Estimating the main melody of a polyphonic audio recording remains a challenging task.
+% in the field of Music Information Retrieval. 
+% ^-- this context is safe to assume from it being ISMIR!
+% In this work,
+We approach the task from a classification perspective and adopt a convolutional recurrent neural network (CRNN) architecture that relies on a particular form of pretraining by source-filter nonnegative matrix factorisation (NMF). 
+The source-filter NMF decomposition is chosen for its ability to capture the pitch and timbre content of the leading voice/instrument, providing a better initial pitch salience than standard time-frequency representations. 
+Starting from such a musically motivated representation, we propose to further enhance the NMF-based salience representations with CNN layers, then to model the temporal structure by an RNN network and to estimate the dominant melody with a final classification layer. 
+The results show that such a system achieves state-of-the-art performance on the MedleyDB dataset without any augmentation methods or large training sets. 
+\end{abstract}
+%
+\section{Introduction}\label{sec:introduction}
+
+Automatic dominant melody estimation (AME) is a popular and rather challenging task in Music Information Retrieval (MIR). 
+In general, AME can be defined as the estimation of fundamental frequencies that represent the pitch values of the dominant melody \cite{Metrics}. 
+The source of the dominant melody could be a leading \secor{vocal}{singing voice} or an instrument. 
+% The difficulty in such a task arises from the typical polyphonic orchestration setup inherent to music composition.
+% There is usually a polyphonic accompaniment to a lead vocal/instrument that
+\jb{The difficulty is that there is usually a polyphonic accompaniment to the lead vocal/instrument, and that this accompaniment}
+follows the melody rhythmically and \secor{in tonal harmony}{harmonically}, \secor{i.e.,}{in the sense that} chord progressions will naturally contain the dominant $F_0$ and/or its harmonics. 
+As a consequence, it is not trivial to obtain a representation that discriminates the main melody from the background music. 
+Hence, one of the main research directions in AME remains finding a salience representation that enhances the fundamental frequency of the dominant melody against the possibly polyphonic background.
+
+One of the most popular and rather simple salience representations is \gp{the} Harmonic Sum \gp{Spectrum} (HSS) \cite{harmonicsummation} that consists of mapping the energy among harmonically related $F_0$s\secmt{to ??}. 
+This has been used effectively in a popular melody extraction algorithm, jbcor{so-called}{} \emph{Melodia} \cite{melodia}. Durrieu et. al.\cite{Durrieu,Durrieu-2} proposed a salience function where the dominant melody (singing voice or instrument) is modeled with a Source-Filter Nonnegative Matrix Factorization (SF-NMF). This method was later combined with HSS in \cite{bittner2016_comparison} \jb{in order} to obtain an enhanced salience representation. There also exist other methods that utilize a simple time-frequency representation, e.g., the Short Time Fourier Transform (STFT) or Constant Q-Transform (CQT), as a low-level representation of salience \cite{CQTbasedMelodyTracking,STFTbasedMelody}. 
+
+Recently, Bittner et. al. \cite{bittner2017_deep} proposed a Convolutional Neural Network (CNN)
+system
+% JBLS says: by deleting this word "system", which is useful but not essential, I save you a line, which allows lots of things to shift forward --- ultimately saving you many lines later on!
+to learn salience representations based on harmonic CQT. 
+The rationale \jb{for} this approach is to learn harmonic \jbcor{relations}{relationships} implicitly and to obtain a salience representation similar to (or better than) HSS.
+
+Salience-based melody estimation methods usually \gp{use} pitch tracking methods on top of salience representations to exploit the temporal relationships between dominant $F_0$s. 
+In \cite{Durrieu}, a Hidden Markov model (HMM) was adopted where the states represent the bins of the source activations, i.e. $F_0$s. 
+Then a threshold-based voicing estimation (melody/non-melody estimation) was applied. Another very popular pitch tracking method was proposed by Salamon et. al. \cite{melodia} where the algorithm creates and characterizes \jbcor{pitch-contours}{pitch contours} on top of HSS. 
+Characteristics of these contours have proven very effective in voicing estimation\cite{melodia,bittner2016_comparison}.
+
+Recently, Deep Neural Networks (DNNs) have become very popular in MIR applications such as sound event detection \cite{eventdetection-CRNN,eventdetection-Bisot} and chord estimation \cite{mcfee_chord}.
+The ability of DNNs to approximate any function with linear weights and non-linear activations, given enough data, makes such systems attractive for MIR tasks. 
+% Having said that, relatively less attempts
+\jb{That said, comparatively few attempts have been made}
+% for the dominant melody estimation task
+\jb{to estimate dominant melody}
+using neural networks.
+% approaches. 
+In~\cite{BLSTM_singingvoice,simon_BLSTM_singingvoice}, bidirectional Long Short-Term Memory (LSTM)~\cite{LSTM}, a special kind of Recurrent Neural Network (RNN), are used for singing voice separation. 
+Such networks are mostly used in modeling the temporal information in time sequences. 
+Recently, in~\cite{jazzCNN}, a hierarchical CNN structure similar to \jbcor{stacked denoising autoencoders (SDAs)}{a stacked denoising autoencoder (SDA)} \cite{stackedAutoEncoders} is used to learn a mapping between an STFT representation and a transcription similar to a piano roll.
+A tutorial on deep learning techniques for MIR tasks can be found in~\cite{MIR-deeplearningtutorial}.
+
+% Although, most of the DNNs perform end-to-end training, a more structured input data such as harmonic-CQT in \cite{bittner2017_deep} have proven very effective. Lately, 
+\jb{Although most of these DNNs perform end-to-end training, it has proven effective to use a more structured input data, such as harmonic-CQT \cite{bittner2017_deep}. Recently,}
+\cite{eventdetection-Bisot} achieved state-of-the-art results in sound classification by using NMF activations as input
+% to a DNN for sound classification, where NMF is interpreted as a pretraining to DNN system.    
+\jb{as a form of pretraining.}
+
+\textbf{\secor{Proposal}{Contributions}. }
+Inspired by these works, we propose a
+Convolutional-Recurrent Neural Network (CRNN) model
+% that relies on a
+\jb{whose pretraining is}
+based on the SF-NMF model
+proposed in \cite{Durrieu}. 
+We show that with NMF-based \jbcor{pre-training}{pretraining},
+we can achieve state-of-the-art results without
+requiring %any
+large training datasets or data augmentation
+methods, and using relatively \jbcor{less complex}{simpler} networks in
+terms of training parameters.
+\jb{Our results clearly demonstrate the usefulness of a good input salience representation to the network, suggesting that performance would climb even higher if the SF-NMF model were improved.} 
+
+% As the results clearly state the usefulness of a good input salience to the network, it is
+% possible to further improve the performance by improving
+% the SF-NMF model to provide even better salience representations.
+Our results are obtained on MedleyDB [5],
+which is a
+% rather
+challenging dataset due to \jbcor{existing}{inclusion of} singing
+voice and instrument melodies in a diverse \jbcor{number}{set} of music
+genres.
+% Inspired by these works, we propose a Convolutional-Recurrent Neural Network (CRNN) model that relies on a pretraining based on \gp{the} SF-NMF model \gp{proposed} in \cite{Durrieu-2}. We show that with SF-NMF pretraining, we can achieve the state-of-the-art results using relatively less complex CRNN structures and without requiring any augmentation or other training datasets. A trivial observation is that  more discriminative salience representations would lead to higher performance CRNN structures.  provided by There is still room for improvement 
+
+% The main motivation behind such a pretraining is to obtain a discriminative salience input to the network, that will to the CRNN network so that we could designrepresentation with which As Our main motivation in pretraining with SF-NMF model is to be able to achieveAs it has been shown by the results, our main motivation with pretraining based on SF-NMF is to  The results clearly show that provided a good initial salience input from the pretraining stage, relatively lCRNN system achieves state of the art performance without requiring any data augmentation or additional datasets for training. It is clear that As the SF-NMF provides a more discriminative  
+% We show that with NMF based pretraining, we can achieve the state-of-the-art results using relatively less complex networks in terms of training parameters without requiring any large training datasets or data augmentation methods. As the results clearly show the usefulness of the pretraining stage with SF-NMF that provides a good input salience representation to the network, it is possible to further improve the performance of the overall system by improving the SF-NMF model to provide even better salience representations. The results are obtained on the MedleyDB \cite{medleydb}, that is a rather challenging dataset due to existing singing voice and instrument melodies in diverse number of music genres. 
+% We observe that in the proposed CRNN structure, CNN stage help\gp{s} improving the quality of the salience representation against $\HFz$. In addition to that, exploiting temporal information with RNN stage significantly improves OA, RPA, RCA and VR. These two stages act similar to an encoder scheme and the classification layer acts as the decoder. Therefore one can interpret the proposed CRNN as an encoder-decoder type of network where the encoder is used to obtain an enhanced salience representation and the decoder produces a frame based transcription.    
+% The results suggest that the performance of the system could be further improved by initially providing an even better salience representation. This can be achieved by improving the SF-NMF model  that can be achieved improving the initial salience representation. by training the proposed network on relatively small training set and  relatively small networks trained on small amount of data without any large training set terms of training parameters is useful in many aspects. The CRNN network requires less the state-of-the-art estimation performance  such as representing out-of-tune melodies of the dominant melody,  estimation performance whilst maintaining providing the complexity of the 
+% We show that the proposed system achieves comparable results with the state-of-the-art melody estimation methods on MedleyDB dataset \cite{medleydb}.\secmt{not enough, elaborate on motivation and qualitative advantages (no data augmentation, complexity, detuning, potential for improvement by enhancing the dom melody from the bg), THIS IS THE MOST IMPORTANT PARAG OF THE PAPER!} 
+
+The rest of the paper is organized as follows: the proposed CRNN system and pretraining with SF-NMF are detailed in Section \ref{sec:System-Overview}. Section \ref{sec:experiments} discusses the dominant melody estimation results obtained on the MedleyDB dataset, and also gives an analysis of SF-NMF-based salience and the comparison between different CRNN variants. Finally, some conclusions and future directions are given in Section \ref{sec:Conclusion}.
+
+% The main contribution of this work is a convolutional-recurrent neural network (CRNN) model that relies on a pretraining based on SF-NMF model in \cite{Durrieu-2}. Although DNNs are mostly trained end-to-end, here we propose a pretraining step and learning salience representations with CRNN from a more structured input data. The This is inspired by the fact that the CNN network in \cite{bittner2017_deep} achieves a high performance with harmonic-CQT structure. And in addition, recently in \cite{eventdetection-Bisot} it is shown that NMF representations are good input . In \cite{bittner2017_deep}, the harmonic structure of the CQT is emphasized by harmonic-CQT that outperforms state-of-the-art   
+% In \cite{bittner2017_deep}, the harmonic CQT carries the harmonic structure to the network, whereas in \cite{eventdetection-Bisot} NMF representations relation between the harmonics   This is inspired by the works \cite{neuralNMF} and \cite{eventdetection-Bisot} Recently, it is shown in \cite{neuralNMF} that NMF can be modeled by autoencoder-decoder neural networks scheme and in \cite{eventdetection-Bisot} NMF is successfully used as a pretraining to DNN assuming it with NMF as a \cite{eventdetection-Bisot} have shown that NMF representations is recently shown to be a and nonneIn this work, we pursue the activations of excitations $\HFz$ as a salience function that are estimated from the Source-Filter nonnegative matrix factorization model proposed by Durrieu et. al.  
+
+% \subsection{Related Work}
+
+% \subsubsection{Source-Filter Model} \label{subsubsec:Source-Filter-Model}
+
+% \gp{Comment: considerong that most of the introduction already present related works, the following part on Durrieu method could be inserted in it. The goal being to reduce the size of the paper which is currently too long.}
+
+% In \cite{Durrieu}, the dominant melody (voice/instrument) is modeled with a conventional source-filter model where the source part is assumed to be harmonic. 
+% The mixing of the dominant melody and the accompaniment is assumed to be instantaneous. 
+% Then each of the source, filter and accompaniment parts are modeled with nonnegative matrix factorization as,
+% \begin{align}	
+%     \V \approx \Vhat &= \VFz \odot \Vphi + \VB \nonumber \\
+%     \label{eqn:SF-Model-IMM}
+%     &=\WFz\HFz \odot \Wphi\Hphi + \WB\HB \\
+%     \label{eqn:SF-Model-SIMM}
+%     &=\WFz\HFz \odot \Wgamma\Hgamma\Hphi + \WB\HB 
+% %     [\Vhat]_{fn}&= \hat{v}_{fn} =  \sum_{u} w^{F_0}_{fu}h^{F_0}_{un} \sum_{k} w^{\Phi}_{fk}h^{\Phi}_{kn} + \sum_{r} w^{B}_{fr}h^{B}_{rn} 
+% \end{align}
+% where $\mathbf{V}$ represents the power spectrogram of signal $\mathbf{X}$ i.e., $\V = |\mathbf{X}|^2$. 
+% $F_0, \Phi$ and $B$ represents the source, filter and background respectively, $\mathbf{W}$ and $\mathbf{H}$ represents the basis and activation matrices, $\odot$ represents the Hadamard product. 
+% The filter basis $\Wphi$ is further modeled with yet another NMF representation in \cite{Durrieu-2}, $\Wphi = \Wgamma \Hgamma$ where $\Wgamma$ are fixed simple and smooth filters. 
+% In this model, the excitation basis $\WFz$ and the smooth filter basis $\Wgamma$ are predefined, the rest of the parameters $\HFz, \Hgamma,\Hphi,\WB$ and $\HB$ are estimated using heuristic multiplicative updates. 
+
+% Here, the excitation basis $\WFz$ is defined such that it represents the harmonic structure of the target fundamental frequencies hence the activations $\HFz$ represent the activation of each fundamental frequency through time. 
+% In this work, we treat the activations of the excitations $\HFz$ as a salience representation and analyze it in various aspects of salience functions.
+
+% \subsection{Source-Filter Nonnegative Matrix Factorization Model}
+
+
+\section{System Overview}\label{sec:System-Overview}
+
+The block diagram of the CRNN system we propose is given in Figure \ref{fig:System-Overview}. 
+% Most of the melody estimation methods rely on three building blocks: \gp{1} salience representation, \gp{2} pitch tracking and \gp{3} voicing estimation. 
+% Following the same methodology\gp{what do you mean by methodology? do you mean terminology?}, proposed CRNN system\gp{the CRNN system we propose?} consists of the following parts:
+% \begin{enumerate}
+% 	\item[\gp{1}] Pretraining with SF-NMF
+%     \item[\gp{1}] CNN Network
+%     \item[\gp{2}] RNN Network
+%     \item[\gp{3}] Classification
+% \end{enumerate}
+% \gp{Organization of the paper. }
+In the first stage (Pretraining), we estimate an initial salience representation using the SF-NMF model. Then this salience is fed into a
+% convolutional neural network
+% JBLS says: you have already defined RNN and CNN in Section 1, so you never need to use the expanded form after that.
+CNN (CNN stage),
+% denoted as the CNN stage,
+where the salience representation is further enhanced by learning local features. The CNN output activations are then fed into an RNN
+% recurrent neural network (RNN)
+to exploit the long-term \jbcor{relations}{relationships} between fundamental frequencies (RNN stage). Then in the final \jb{Classification} stage, we classify the representations as melody/non-melody and give an estimate for $F_0$ at each time-frame where each class represents a semitone fundamental frequency. \db{Note that the same procedure is applied in both the training and testing \jb{of} the system.} 
+
+In the design of the CRNN system, we are inspired by a similar CRNN proposed in \cite{mcfee_chord} for chord recognition, where the network is interpreted as an encoder-decoder scheme. In the CRNN structure we propose, the CNN and RNN stages can also be treated \jbcor{as a total}{together as an} encoding stage \jb{(}\db{input sequence to mid-level salience representation}\jb{)} where the output is an enhanced salience representation that captures both spatial and temporal features. Then the classification stage acts as a decoding stage \db{(mid-level representation to output sequence)} where the salience is mapped into a frame-based note representation. 
+
+% Note that we are inspired by a similar CRNN network in \cite{mcfee_chord} for chord recognition.  The performance of the dominant melody estimation mainly depends on how well the melody is represented in the salience representation\gpcor{which}{. This} has been described as the bottleneck of the performance in \cite{bittner2015_classification,bittner2017_deep}. 
+% In this work, we initially estimate a salience representation using SF-NMF model (Pretraining) and then this salience is further enhance by convolutional neural network (CNN Stage). 
+% % this salience as an input to the CNN stage. Then the CNN would learn the local features on $\HFz$ representation and enhance the saliency representation further. \secmt{IMPORTANT: Say explicitly that the network is inspired by Brian's and cite the paper here}
+% The temporal relations between pitch frequencies are exploited a recurrent neural network (RNN) network over the resulting salience representations of CNN network (Part 3\gp{Comment: refer to the part using label and ref}). 
+% We finally classify the representations as melody/non-melody and give a $F_0$ estimate for each time-frame (Part 4\gp{Comment: refer to the part using label and ref}) where each class represents  a semitone fundamental frequency. The block diagram of the overall system is given in the Figure \ref{fig:System-Overview}. 
+% It is important to note that the target output of this system is of semitone resolution i.e. the classifier output consists of semitone fundamental frequencies. 
+\begin{figure}
+ \centerline{\framebox{
+ \includegraphics[width=\columnwidth]{System_Overview_neatened.pdf}}}
+ \caption{Block diagram of the proposed CRNN system with pretraining}
+ \label{fig:System-Overview}
+\end{figure}
+
+   
+% a result, there has been many attempts to obtain  
+% Note that the performance of the pitch tracking and voicing estimation depends on the salience representation, it is clear that a better salience representation would result higher performance in the melody estimation. A 'good' salience representation should emphasize or enhance the dominant melody fundamental frequency against the background music for all target frequencies. For this reason, many previous works attempt to obtain better salience representations \cite{Durrieu,bittner2017_deep,bittner2016_comparison,melodia}.
+
+% In the pretraining and CNN parts, the aim is to obtain a good salience representation that enhances the dominant melody against the background polyphonic music. Recent works such as \cite{bittner2017_deep,bittner2016_comparison,melodia} show that the salience the bottleneck of melody estimation algorithms is the salience representations. Here, our aim is to start from a musically motivated, already good enough salience representation than to further enhance it with a few CNN layers. that describes the pitched content
+
+\subsection{Pretraining with SF-NMF} \label{subsec:Pretraining}
+\db{In \cite{Durrieu}, the dominant melody (voice/instrument) is modeled using a source-filter model. Assuming the mixing of the dominant melody and the accompaniment (background) is instantaneous, the source, filter and accompaniment parts are modeled with \db{the SF-NMF} model as follows:}
+% In \cite{Durrieu}, the dominant melody (voice/instrument) is modeled using a source-filter model where the source part is assumed to be harmonic. 
+% The mixing of the dominant melody and the accompaniment is assumed to be instantaneous. 
+% Then each of the source, filter and accompaniment parts are modeled with nonnegative matrix factorization following:
+\begin{align}	
+    \V \approx \Vhat &= \VFz \odot \Vphi + \VB \nonumber \\
+    \label{eqn:SF-Model-IMM}
+    &=\WFz\HFz \odot \Wphi\Hphi + \WB\HB \\
+    \label{eqn:SF-Model-SIMM}
+    &=\WFz\HFz \odot \Wgamma\Hgamma\Hphi + \WB\HB 
+%     [\Vhat]_{fn}&= \hat{v}_{fn} =  \sum_{u} w^{F_0}_{fu}h^{F_0}_{un} \sum_{k} w^{\Phi}_{fk}h^{\Phi}_{kn} + \sum_{r} w^{B}_{fr}h^{B}_{rn} 
+\end{align}
+where $\mathbf{V}$ represents the power spectrogram of \jb{the} signal,
+% $\mathbf{X}$
+i.e., $\V = |\mathbf{X}|^2$ \jb{(}\db{where $\mathbf{X}$ is the STFT of the audio signal to be analyzed}\jb{)}; 
+$F_0, \Phi$ and $B$ represents the source, filter and background respectively; $\mathbf{W}$ and $\mathbf{H}$ represent the basis and activation matrices; and $\odot$ denotes the Hadamard product. 
+The filter basis $\Wphi$ is further modeled with yet another NMF representation\jb{, as} in \cite{Durrieu-2}: $\Wphi = \Wgamma \Hgamma$. 
+
+\db{In this model, the source, $\VFz=\WFz\HFz$, is assumed to have a harmonic structure. To ensure such a structure, the basis $\WFz$ is pre-constructed (not estimated) such that each column represents the harmonic structure for one $F_0$. Represented $F_0$s start from a minimum frequency, i.e., $F_0=55Hz$, and they are logarithmically spaced, i.e., the ratio between consecutive $F_0$ values would be $2^{(1/60)}$ for a resolution of 5 bins per semitone. Such a construction enforces the corresponding row in the activation matrix $\HFz$ to represent the activation of that specific $F_0$, similar to a saliency representation. That is the rationale behind using $\HFz$ as \jb{a} saliency representation as in \cite{Durrieu,Durrieu-2,bittner2016_comparison}.  }
+
+\db{The main assumption with the filter, $\Vphi$, is to have a smooth structure. One way to ensure such smoothness is to construct a basis $\Wphi$ from smooth filters in advance, similar to enforcing harmonic structure in the source $\VFz$. However it is not possible to directly construct $\Wphi$ with smooth basis filter structures since it depends on the dominant melody. In \cite{Durrieu-2}, it is proposed to represent $\Wphi$ with another NMF model, $\Wgamma \Hgamma$, where the columns of $\Wgamma$ are constructed (not estimated) as simple and smooth band pass filters that are linearly spaced and overlapping. This structure \jbcor{enforces}{forces} $\Wphi$ to be smooth,}
+\jb{thus ensuring that $\Vphi$ will be smooth as expected.}
+% that would ensure $\Vphi$ to be smooth as expected.}
+
+\db{The accompaniment/background, $\VB=\WB\HB$, is also represented with a standard NMF model where there are no constraints on the basis such as smoothness or being harmonic. In summary, \jb{the} source basis $\WFz$ and smooth filter basis $\Wgamma$ are pre-constructed and the rest of the parameters $\HFz$, $\Hgamma$,$\Hphi$,$\WB$ and $\HB$ are estimated using the standard alternating scheme and heuristic multiplicative updates.}
+% As an example, if    
+% In the estimation of the parameters of the model, two of the parameters are predefined (not estimated): $\WFz$, to emphasize the harmonic structure in the source/excitation part and $\Wgamma$, to have smooth filter basis representations (smooth $\Wphi$). The rest of the parameters $\HFz$, $\Hgamma$,$\Hphi$,$\WB$ and $\HB$ are estimated using heuristic multiplicative updates. For more details, please see \cite{Durrieu-2}.}
+
+% where \db{the columns of} $\Wgamma$ are fixed \db{as} simple and smooth filters. The source basis $\WFz$ and the smooth filter basis $\Wgamma$ are predefined, the rest of the parameters $\HFz$, $\Hgamma$,$\Hphi$,$\WB$ and $\HB$ are estimated using heuristic multiplicative updates. 
+
+% \db{Among the predefined parameters, $\WFz$ is constructed as follows: Each column represents a single excitation with a fundamental frequency $F_0$ where \jb{the} $F_0$s follow a logarithmic spacing between consecutive columns. Hence, the NMF activations $\HFz$ act as a salience representation where each row represents the activation of its corresponding $F_0$ through time. An example of $\HFz$ 
+% % representation
+% is given in Figure \ref{fig:Model-1-Example} (Top-left). On the other hand, each column of $\Wgamma$ is constructed as a smooth bandpass filter where each filter is linearly spaced, overlapping and cover the full frequency range in total. With this approach}
+% The activations of the source part, denoted with $\HFz$, can  be used as a salience representation due to the fact that each source basis vector in $\WFz$ represents a single $F_0$. Hence, each row in $\HFz$ represents the activation of its corresponding $F_0$ through time. 
+
+% Here, the source basis $\WFz$ is defined such that it represents the harmonic structure of the target fundamental frequencies hence the activations $\HFz$ represent the activation of each fundamental frequency through time.
+
+% In the SF-NMF model, the activations of the source part, denoted with $\HFz$, can be \gpcor{utilized}{used} as a salience representation as in \cite{Durrieu-2,bittner2016_comparison}. 
+
+
+% As described in Section \ref{subsubsec:Source-Filter-Model}, the activations of the source $\HFz$ can be \gpcor{utilized}{used} as a salience representation as in \cite{Durrieu-2,bittner2016_comparison}. 
+% This is due to fact that each source basis vector in $\WFz$ represents a single $F_0$. 
+% Hence, each row in $\HFz$ represents the activation of its corresponding $F_0$ through time. 
+
+\db{In this work, for the SF-NMF model, we follow the parametrization given in \cite{bittner2016_comparison} where the minimum and maximum frequencies represented in $\HFz$ are chosen as $55 Hz$ and $1760 Hz$ respectively. We choose the resolution of the $F_0$s as 5 bins per semitone which results in 60 bins per octave (bpo) and 301 bins in total per frame.}
+
+% In this work, for the SF-NMF model we follow the parametrization given in \cite{bittner2016_comparison} where the minimum and maximum frequencies represented in $\HFz$ are chosen as $55 Hz$ and $1760 Hz$ respectively. We choose the \dbcor{number}{resolution} of the $F_0$s between each semitone
+% % (step notes)
+% % JBLS says: I don't think you need to explain that semitones are "step notes". But, if "step notes" is an important terminology to use here that I'm not aware of, please keep it!
+% to be 5 resulting in 60 bins per octave \db{(bpo)} and 301 bins per frame. 
+% In the SF-NMF model, there are several parameters to tune i.e., number of basis vectors for source, filter and background NMF models and number of smooth filters. 
+% We follow the parametrization given in \cite{bittner2016_comparison} that are also given in Table \ref{tab:parameters}. 
+% We only modify the number of filters to be $K=15$ and the number of $F_0$s between each semitone to be 5 (60 bins in one octave). 
+% An example of an input spectrogram and resulting source activations $\HFz$ are given in the Figure \ref{fig:Pretraining}. 
+
+% \begin{figure}
+%  \centerline{\framebox{
+%  \includegraphics[width=\columnwidth]{Pretraining_v2.png}}}
+%  \caption{(Left) Power spectrogram of an excerpt "MatthewEntwistle\_FairerHopes.wav"  (logarithm is shown for illustration) and (Right) estimated $\HFz$ representation with SF-NMF model}
+%  \label{fig:Pretraining}
+% \end{figure}
+
+\db{Note that due to the logarithmic spacing of the $F_0$s where the consecutive frequencies have a ratio of $2^{1/60}$, one can tune the represented $F_0$s with proper choice of the minimum frequency $F_{0,min}$.}
+% Note that the fundamental frequencies represented in $\WFz$ follow a logarithmic spacing such that consecutive frequencies have a ratio of $2^{1/60}$. 
+% Hence, one can tune the \jbcor{seminote}{} frequencies by choosing an appropriate minimum frequency $F_{0,min}$. 
+% As an example, for $F_{0,min}=55Hz$, the tuning of the notes follow $A4=440Hz$ whereas for $F_{0,min}=55.25Hz$, the tuning of the notes follow $A4=442Hz$. 
+\jb{As an example, if $F_{0,min}=55Hz$, the notes will be tuned to $A4=440Hz$ whereas if $F_{0,min}=55.25Hz$, they will be tuned to $A4=442Hz$.}
+This choice of tuning might depend on the target dataset. 
+Here, we choose the tuning $A4=440Hz$ assuming that such tuning is more widely used. \db{It is important to mention that this construction of $F_0$s in
+% the
+$\WFz$ cannot be generalized to all music genres, e.g., traditional Turkish music with makams. Hence the methods based on SF-NMF, as well as the proposed scheme, are limited in that sense.}   
+
+Although we aim to classify the fundamental frequencies at semitone resolution, we initially choose a higher resolution for the $F_0$s in  $\WFz$. 
+In practice, it is highly probable that a dominant voice or instrument will be slightly out-of-tune, \jb{and hence will not fit}
+% hence \gp{does} not fit to
+any of the represented $F_0$s. 
+In such cases, a high resolution representation of $F_0$s might better describe these out-of-tune notes. 
+% A detailed analysis of $\HFz$ used as a salience representation is given in Section~\ref{subsec:analysis-HF0}.
+
+\subsection{CNN \secor{Network}{stage}} \label{subsec:CNNstage}
+In order to enhance the $\HFz$-salience,
+% we propose to use \gpcor{fully convolutional}{convolutional neural network} architectures where we exploit two different types of approaches. 
+\jb{we propose two different CNN architectures, which we denote as CNN1 and CNN2.}
+% JBLS says: the original wording is misleading, because it suggests that you are using a single architecture that exploits both approaches at once, when in fact you are proposing and testing two alternative architectures, each taking a different approach. At least, that's how I understand it!
+In
+% the first approach (CNN architecture 1)
+CNN architecture 1 (CNN1), we first decrease the $F_0$ resolution to semitones, then we train CNN layers to learn local structures, i.e., the confusions between semitones. 
+In the second approach (CNN2), we follow the network proposed in \cite{bittner2017_deep}. Here, the network learns the features in the original resolution and within a semitone interval with one \jbcor{exceptional}{additional} layer that learns the octave patterns. 
+% We denote the CNN architectures 1 and 2 by CNN1 and CNN2 respectively. 
+
+Note that since \jbcor{the}{each} CNN architecture only applies 2D linear filters and non-linear activations, the input structure is not lost through the layers of the network. This provides an advantage of interpretable hidden layer activations \se{and leads to a new form of salience as output} where each row still represents the activation of a fundamental frequency. 
+
+In both architectures, rectified linear units (ReLu\jb{s}) are used as non-linear activations and are applied to each CNN layer output. Batch normalization is applied before each intermediate CNN layer input, as it has proven effective in the convergence of the network by reducing the internal covariance shift \cite{batch_normalization}. The columns of $\HFz$ are normalized with $l_1$ norm before \jbcor{feeding \secor{into}{them}}{being fed into} the CNN network. Such a normalization is possible since the task at hand is the estimation of the melody; that is, only the position of the fundamental frequency is needed, not the exact energy. 
+
+\subsubsection{CNN Architecture 1 (CNN1)} \label{subsubsec:CNN1}
+\db{There are 5 layers in \jb{the} CNN1 architecture. The first layer gathers the energy around each semitone by applying focused filters centered around each semitone frequency. In this layer, there are 64 (5x1) filters each with a stride (5,1).
+\jb{This way, not only is the energy focused on the semitones, but also the frequency resolution is decreased to the semitone scale}
+% By this way not only the energy is focused on the semitones but also the frequency resolution is decreased to semitone level
+from 5 bins per semitone (time resolution remains the same). The rationale behind the first layer is two-fold: First, the number of parameters is severely decreased by lowering the frequency resolution, i.e., it takes 5 times less filter parameters in order to learn features. Second, out-of-tune notes would already be represented in the vicinity of the corresponding semitone in the $\HFz$ representation. Focused filters on semitones would gather the energy on the semitone that is a way of retuning the melody on the represented semitone fundamental frequencies. }
+
+% The aim of the first layer of CNN1 is to gather the energy around each semitone and to decrease the resolution to semitones from 5 \jbcor{step notes between each semitone}{bins per semitone}}. For this reason, the first layer has 64 (5 x 1)-filters where the strides of the filters are (5, 1). This results in 5:1 resolution in frequency and 1:1 resolution in time. 
+% which is illustrated for one unit of the first layer in Figure \ref{fig:CNN-arc1-layer1-input-output}. 
+% Another way of gathering the energy and decreasing the resolution would be applying a convolution with strides (1, 1) and applying max pooling in the frequency dimension. We prefer the former method to focus the filters only around semitones with a semitone interval (5 step-notes). 
+
+% % JBLS says: I changed the format of the list/paragraph below to be more typical. It is more elegant to just make everything in-line in a paragraph than to use ad hoc line breaks.
+% The rationale behind the first layer is two-fold:
+% %\begin{enumerate}
+% %	\item 
+% (1) Learning the confusions between semitones requires 5 times less parameters when the resolution of the frequency is decreased to semitones from 5 step notes between semitones.
+% %\item 
+% (2) Out-of-tune notes would already be represented in the vicinity of the corresponding semitone in the $\HFz$ representation. Focused filters on semitones would gather the energy on the semitone that is a way of retuning the melody on the represented fundamental frequencies.
+% %\end{enumerate}
+% % JBLS says: I didn't quite follow this last sentence. I made an effort to understand it and slightly rewrite it. Please confirm this makes sense!
+% \jb{Focusing the filters on semitones gathers the energy of neighboring bins; this is thus a way of retuning the melody to the represented fundamental frequencies. [FIXME--make sure this sentence is accurate as re-written!]}
+
+% \begin{figure}
+%  \centerline{\framebox{
+%  \includegraphics[width=\columnwidth]{CNN-arc1-layer1-input-output-v2.png}}}
+%  \caption{Input patch and output activation of a single unit in CNN1 Architecture layer 1. Three (5x1) filters with stride 5 are shown (\emph{top filter:} black .-. \emph{middle filter:} red - \emph{bottom filter:} yellow .. )}
+%  \label{fig:CNN-arc1-layer1-input-output}
+% \end{figure}
+
+In the following layers, zero padding is applied to convolutions to keep the dimensions \dbcor{fixed}{unchanged}. The second layer has 64 (5 x 3) filters that cover $\pm$2 semitone interval and roughly 30ms in time. Then the third layer has 64 (3 x 3) filters that cover $\pm$1 semitone and 30ms in time. 
+The fourth layer has 16 (15 x 3) filters to learn note confusions in one octave. Filters cover $\pm7$ semitone interval and again 30ms in time. Then enhanced salience representation is obtained as the output of the final CNN layer that has only one (1x1) filter as in \cite{bittner2017_deep} but with a rectified linear unit instead of a sigmoid. 
+% \jb{The above paragraph would be much clearer if every time you said `$\pm x$ units', you always used the same unit. Instead, you use three separate units (note interval, half notes, notes). I recommend always using the unit SEMITONES. If my understanding is correct, this means you would have $\pm 1$ semitone, $\pm 1$ semitone, and finally $\pm 7$ semitones.}
+The overall structure of CNN architecture 1 is shown in Figure \ref{fig:CNN-architecture-1}.
+
+\begin{figure}
+ \centerline{\framebox{
+ \includegraphics[width=\columnwidth]{CNN-architecture-1.png}}}
+ \caption{CNN Architecture 1 (CNN1). \secmt{black lines on blue bf not visible, try to use yellow and make the lines thicker}}
+ \label{fig:CNN-architecture-1}
+\end{figure}
+
+\subsubsection{CNN Architecture 2 (CNN2)}\label{subsubsec:CNN2}
+CNN2 is based on the network proposed in \cite{bittner2017_deep}. In this network, the resolution of the input remains the same throughout the layers of the CNN, i.e., no pooling is applied. Note that the input \jbcor{the}{to} CNN2 is $\HFz$; therefore, the first layer of the network contains only a single channel instead of six. 
+
+% The differences \gpcor{of}{between} CNN2 \gpcor{from}{and} the network \gp{proposed }in \cite{bittner2017_deep} are the following\secmt{provide motivation for these differences}: \\
+% %\begin{itemize}
+% - The input to CNN2 is $\HFz$ with single channel whereas the input in \cite{bittner2017_deep} is a harmonic-cqt representation with 6 channels.\\
+% - The input is not batch normalized but it is n. \\
+% - The final layer applies a ReLu instead of a sigmoid as a non-linear activation.
+% %\end{itemize}
+
+As mentioned before, the overall system targets semitone resolution for the output fundamental frequencies. This requires a reduction in resolution somewhere \jbcor{throughout}{in} the system. In this architecture, we left the dimensionality reduction to the final classification layer. 
+
+\subsection{RNN \secor{network}{stage}} \label{subsec:RNNstage}
+Recurrent neural networks are mostly \gpcor{utilized}{used} in MIR and audio analysis tasks to model \secor{time series where the samples are correlated}{the dynamics of the observations}, typically for chord recognition \cite{mcfee_chord} and speech recognition \cite{BLSTM_speech}. Here, we use a single bidirectional Gated Recurrent Unit (BiGRU) layer to capture temporal \jbcor{relations}{relationships} between $F_0$s. A GRU is a special kind of RNN \cite{GRU} where the units are able to model long-term temporal \jbcor{relations}{relationships} whilst using a gate structure. It has the advantage of not suffering from the vanishing gradient problem of standard RNN \se{and has proven to be easier to train compared to the 
+% long short-term memory (
+LSTM alternative.}
+% Recently, bidirectional long short term memory units (BLSTM) \cite{LSTM} are adopted for the task of singing voice estimation in \cite{simon_BLSTM_singingvoice,BLSTM_singingvoice}.
+
+The number of units in a BiGRU layer should be chosen higher or equal to the output dimension of the preceding CNN network. In the BiGRU structure, actually two GRU layers are trained with the same input but in reverse directions to model the $F_0$ \jbcor{relations}{relationships} from both directions. Later, the two layers are merged to have a single output.
+
+\subsection{Classification}\label{subsec:Classification}
+The final layer of the system is a classifier where one class represents the non-melody and the rest of \gp{the} 61 classes represent semitone fundamental frequencies between A1 and A6 (\jbcor{both being included}{inclusive}). The multiclass classification output is obtained with a single dense layer and softmax activations. 
+
+The overall system is trained minimizing the cross entropy loss between the softmax activations and true probabilities. A frame is classified as a non-melody frame only if the probability of non-melody class is higher than the rest. Regardless of this decision, $F_0$ is estimated for each frame by simply picking the \jbcor{highest}{most} probable $F_0$ class among the 61 note classes. Note that even if the non-melody class has the highest probability, the second-highest probability gives a good estimation of the pitch.   
+
+An example output of the classification layer that is obtained from a CNN1 + RNN + Classification architecture is shown in Figure \ref{fig:Model-1-Example}.
+% (bottom-left). 
+In this example, $\HFz$ input (top-left) gives a very good initial salience. Then the CNN1 output activations (top-right) further enhance the dominant part against the harmonic background. It is observed that the dominant $F_0$ classes mostly have the highest probabilities against the rest of the class probabilities (bottom-left).
+\begin{figure}
+ \centerline{\framebox{
+ \includegraphics[width=\columnwidth]{CRNN1-illustraion.png}}}
+ \caption{(Top-left) $\HFz$ representation of a small audio excerpt as input to CRNN, (Top-right) CNN1 activations, (Bottom-left) Classifier activations of CRNN, (Bottom right) Ground-truth annotations.}
+ \label{fig:Model-1-Example}
+\end{figure}
+% $\mathbf{\hat{y}}$ and true probabilities $\mathbf{y}$ which is defined as,
+% \begin{align}
+% 	L(\mathbf{y},\mathbf{\hat{y}}) &= -\sum_{i} y_i \log \hat{y}_i \nonumber \\
+%     &= -\sum_{i} y_i \log \frac{\exp{f_{i}}}{\sum_{j}\exp{f_{j}}}
+% \end{align}
+% where $f_i$ and $y_i$ represents the output activation and the true probability for the $i$'th class respectively. 
+
+
+
+% Beyond the efforts to enhance the $\HFz$ as salience such as constraints as smooth filter activations $\Hphi$, sparse $\HFz$ and stable multiplicative updates with MM method, we also resort to deep neural networks to further enhance the salience representation. Specifically, we utilize convolutional neural networks (CNN) to enhance the salience representation and then utilize a recurrent neural network (RNN) to track the melody. We approach the melody estimation from a classification perspective therefore the activations of RNN is fed into a final classification layer that both discriminates melody/non-melody frames and estimates a fundamental frequency for each frame.  
+
+% In \cite{bittner2017_deep}, a convolutional neural network is proposed that inputs a harmonic CQT representation and outputs a salience representation. The melody is then estimated by simple peak picking strategy that is similar to the analysis method used in Section \ref{subsec:analysis-HF0}. The rationale behind such an input is to implicitly learn harmonic summation by a CNN network, that is known to be a good salience representation \cite{bittner2016_comparison,melodia}. It has been shown that even without a temporal tracking, the resulting salience representation achieves the state-of-the-art performance. This model will be used as a baseline to compare the proposed models. 
+
+\section{Experiments}\label{sec:experiments}
+In this section, we evaluate the proposed \se{NMF-based} CRNN system using the MedleyDB dataset \cite{medleydb}. For the annotations, we use the "Melody2" definition in MedleyDB that is the $F_0$ of the dominant melody at each time step, drawn from multiple sources. With this definition of melody, it is possible to have separate instruments or voices as the source of dominant melody throughout a single song. Among 108 annotated songs in the dataset, 48 songs have predominant instrumental melody, 30 songs have predominant vocal melody and 30 songs have both predominant instrument and vocal melodies.
+
+We randomly split the MedleyDB set into train, validation and test sets such that the tracks from the same artist do not belong to different sets following the artist conditional random splitting \dbcor{given}{as} in \cite{bittner2017_deep,bittner2016_comparison}. There are 27 full-length tracks in the test set, 67 full-length tracks in the training set and 14 full-length tracks in the validation set. Note that we used the same test split with \cite{bittner2017_deep} in the MedleyDB in the rest of the experiments to be able compare the results. 
+
+We use \gp{the} five standard evaluation metrics given in \cite{Metrics}, namely: Raw Pitch Accuracy (RPA), Raw Chroma Accuracy (RCA), Overall Accuracy (OA), Voicing False Alarm (VFA) and Voicing Recall (VR). All the codes are written in Python and available online\footnote{
+\dbcor{To be given in camera ready version.}{github.com/dogacbasaran/ismir2018\_dominant\_melody\_estimation}}. \db{CQT implementation is based on \jb{the} \emph{librosa} python package \cite{librosa}.}
+%\end{enumerate}}. The evaluation results are obtained using mir\_eval implementation \cite{mireval}.
+% Our initial experiments using Multinomial Logistic Regression classifier have not proven effective.  
+
+\subsection{Network training}
+% I changed "Networks'" to "Network", but using the jbcor command inside the subsection name seemed to not work.
+
+We trained three different networks with the following combinations of the architectures given in Section \ref{sec:System-Overview}: \\
+
+%\begin{itemize}
+\hspace{-0.45cm}\textbf{CRNN-1}: CNN1 + 1 layer BiGRU (128 Units) + Classification layer;\\
+\textbf{CRNN-2}: CNN2 + 1 layer BiGRU (160 Units) + Classification layer;\\
+\textbf{C-NN}: CNN2 + Classification layer.\\
+%\end{itemize}
+
+We further denote the network variants by \jbcor{preceding}{prepending} a label \jbcor{representing}{indicating} the input to the network: "SF" for $\HFz$ input and "CQT" for CQT input. Note that the CQT parameters are chosen such that the representation of a signal via $\HFz$ or CQT would have the same dimensions\footnote{CQT parameters: Minimum $F_0$=55Hz, $\#$ of octaves = 5, bpo = 60}.
+% , i.e., CQT-CRNN-2, SF-CRNN-1. 
+% JBLS says: I think it's clear from the text how the naming system works --- no need to give examples here. It will be clear when readers look at the tables and figures.
+
+In the proposed CRNN structure, the purpose of the CNN stage is to learn local features, whereas the purpose of the RNN stage is to account for long term temporal \jbcor{relations}{relationships}. This requires selecting relatively small patch lengths for the CNN layers but longer patch lengths for the RNN layer. For this purpose, we used different patch lengths for the CNN and RNN parts while jointly training them.
+% \footnote{Thanks to the TimeDistributed layer in Keras, such a training approach is possible.}
+
+In all the models, the CNN layers are trained on either 0.29-second (25-frame) or 0.58-second (50-frame) patches and the RNN layer is trained on 5.8-second (500-frame) patches. The training is performed using mini-batches of 16 patches per batch. We use the ADAM optimizer \cite{ADAM-optimizer}, and reduce the learning rate if there is no improvement in validation loss after 20 epochs. The early stopping strategy is used if the validation loss is not decreased after 20 epochs. The maximum possible number of epochs is set to 200. All models were implemented with Keras 2.0 \cite{keras} and Tensorflow 1.0 \cite{tensorflow} and tested using NVIDIA-Tesla K80 GPUs.
+The number of parameters for each network model is given in Table~\ref{tab:network-parameters}. % \jb{JBLS says: Why are the headings in Table 1 specified as ``SF-CRNN-1'' and ``2''? If these `SF' labels are not necessary (i.e., the parameter counts are the same for SF or CQT versions), then they should be removed. If these labels are necessary, then why aren't the CQT variants also listed?}
+
+Note that, in the training, we do not benefit from any data augmentation method or from other larger datasets.  
+
+\begin{table}
+ \begin{center}
+ \begin{tabular}{|r|c|c|c|}
+  \hline
+                 & CRNN-1  & CRNN-2 & Baseline \\
+  \hline
+  \# of Param.   & 307,199  & 854,319 & 406,253  \\
+  \hline
+  \end{tabular}
+ \end{center}
+ \caption{The number of trainable parameters for CRNN-1, CRNN-2 and the baseline CNN network \cite{bittner2017_deep}}
+ \label{tab:network-parameters}
+\end{table}
+
+\subsection{Results}
+We compare the outputs of all three models to a CNN-based melody tracking system \cite{bittner2017_deep}, considered as a baseline, which proved to significantly outperform the previous state-of-the-art methods in \cite{melodia,bittner2016_comparison}. 
+The evaluation results of \cite{bittner2017_deep} are available online.\footnote{github.com/rabitt/ismir2017-deepsalience} By choosing the same test split from the MedleyDB, we are able to compare \jbcor{to those}{these} published results \jb{to ours} without any re-evaluation. The evaluation results for all network variants (SF-CRNN-1, SF-CRNN-2, CQT-CRNN-2, SF-C-NN) and for the baseline are given in Figure \ref{fig:all-variants-results}. We use McNemar's test on the classification results and provide p-values as a measure of significance whenever relevant \db{\footnote{Mcnemar test is based on \emph{statsmodel} package in python.}}.
+
+\vspace{0.15cm}
+\hspace{-0.45cm}\textbf{CQT vs. $\HFz$ as salience} 
+
+\hspace{-0.45cm}We explore the usefulness of \jbcor{a}{} pretrained input by comparing the evaluation results of \jb{the} CRNN-2 model when the input is CQT \jbcor{and}{or} $\HFz$\jbcor{(}{---i.e.,} comparing CQT-CRNN-2 and SF-CRNN-2\jbcor{ variants)}{}. 
+% The evaluation results for \jbcor{CQT-CRNN-2, SF-CRNN-2}{these} models are given in Figure \ref{fig:all-variants-results} together with the baseline \jb{(as well as other results discussed later)}. 
+The results show that CRNN-2 model performs significantly better in OA (p=0.0015) and RCA (p=0.0003) scores when the input to the network is $\HFz$. 
+On average, results for SF-CRNN-2 are
+% 6 percentage points in OA, +9 and +7 percentage points higher in RPA and RCA scores. 
+\jb{6, 9 and 7 percentage points higher for OA, RPA and RCA, respectively.}
+
+The reason the CRNN-2 model performs better with pretrained input is that $\HFz$ provides a better initial salience representation than the CQT. Ideally, a salience representation of melody should be discriminative for each target fundamental frequency against the polyphonic background music. We can analyze both $\HFz$ and CQT representations to see how well they fit this definition of ``ideal'' salience by performing a simple peak-picking strategy as in \cite{bittner2017_deep}. Specifically, the frequency with maximum amplitude/salience for each time frame \se{point} is chosen as the estimate of the fundamental frequency. We can compute the RPA and RCA scores using those estimates to see their performances as salience. The results
+% are
+obtained on \jbcor{all}{the full} MedleyDB dataset are given in Table \ref{tab:HF0-CQT-analysis}. 
+It can be seen that $\HFz$ performs nearly twice 
+as \jbcor{better than}{well as} the CQT representation in both RPA and RCA scores, \jbcor{that shows}{showing that} $\HFz$ provides a better initial salience to the CRNN networks.\\     
+\begin{table}
+ \begin{center}
+ \begin{tabular}{|l|l|l|}
+  \hline
+  & $\HFz$  & CQT\\
+  \hline
+  RPA   & $0.538 \pm 0.141$  & $0.210 \pm 0.16$ \\
+  \hline
+  RCA   & $0.648 \pm 0.127$  & $0.411 \pm 0.15$ \\
+  \hline
+  \end{tabular}
+ \end{center}
+ \caption{The comparison of RPA and RCA scores for $\HFz$ feature and CQT feature by simple peak-picking method.}
+ \label{tab:HF0-CQT-analysis}
+\end{table}
+
+\vspace{-0.25cm}
+\hspace{-0.43cm}\textbf{SF-CRNN-2 model vs. Baseline CNN Network}
+
+\hspace{-0.45cm}\jb{The} SF-CRNN-2 model uses \jb{the} CNN-2 architecture in the CNN stage, \jbcor{that is}{} the same CNN \jbcor{network}{} \gpcor{with}{as} the baseline.
+% JBLS says: note that "CNN Network" is redundant since the last N in CNN stands for Network.
+When we compare the evaluation results given in Figure \ref{fig:all-variants-results}, we observe that \jb{the} SF-CRNN-2 model outperforms the baseline in the RPA (p = 0.0015) and VR (p=0.052) scores. 
+The model has slightly higher OA \jb{and} RCA scores on average than the baseline. 
+On the other hand, SF-CRNN-2 has \jb{a} higher number of network parameters ($854,319$) than the baseline CNN ($406,253$). 
+This is due to the additional RNN layer that exists in SF-CRNN-2.
+
+
+\begin{figure}
+ \centerline{\framebox{
+ \includegraphics[width=\columnwidth]{SF-C-RNN-1_SF-C-RNN-2_CQT-C-RNN-2_SF-C-NN_baseline-comparison.png}}}
+ \caption{Evaluation metrics for SF-CRNN-1, SF-CRNN-2, CQT-CRNN-2, SF-C-NN and the baseline \cite{bittner2017_deep}.}
+ \label{fig:all-variants-results}
+\end{figure}
+% In Figure \ref{fig:main-results}, the evaluation results for three models and the baseline are given.
+% \begin{figure}
+%  \centerline{\framebox{
+%  \includegraphics[width=\columnwidth]{Model-1-Model-2-Model-3-Baseline.png}}}
+%  \caption{Evaluation metrics for Model-1, Model-2, Model-3 and baseline \cite{bittner2017_deep}}
+%  \label{fig:main-results}
+% \end{figure}
+\vspace{0.15cm}
+\hspace{-0.45cm}\textbf{Comparison between variants SF-CRNN-1, SF-CRNN-2 and SF-C-NN}
+
+% \hspace{-0.45cm}The evaluation results for SF-CRNN-1, SF-CRNN-2 and SF-C-NN are given in Figure \ref{fig:all-variants-results}. 
+\hspace{-0.45cm}On average, SF-CRNN-1 performs slightly better than all other models 
+\jbcor{in overall, raw pitch, raw chroma accuracy and voicing recall rates.}{in all metrics aside from VFA.}
+% \begin{figure}
+%  \centerline{\framebox{
+%  \includegraphics[width=\columnwidth]{SF-CRNN-1_SF-CRNN-2_SF-C-NN-comparison.png}}}
+%  \caption{Evaluation metrics for SF-CRNN-1, SF-CRNN-2 and SF-C-NN.}
+%  \label{fig:SF-CRNN-1_SF-CRNN-2_SF-C-NN-results}
+% \end{figure}
+Comparing SF-CRNN-1 and SF-CRNN-2, we observe that a similar or higher performance can be achieved by \jb{the} low resolution CNN1 architecture and with \jbcor{much less number of}{far fewer} training parameters (see Table \ref{tab:network-parameters}). VR rates \jbcor{of}{for} SF-CRNN-1 and SF-CRNN-2 are significantly higher than the SF-C-NN; however, VFA rates are higher as well. 
+This behavior could \jbcor{probably}{} be due to the activations of the RNN layer that should force some sort of temporal smoothing on the salience representation. 
+
+On the other hand, the significantly better OA, RPA and RCA scores of SF-CRNN-2 relative to SF-C-NN suggest that the temporal tracking with RNN effectively improves the performance of the melody estimation.
+
+Comparing the best performing network variant SF-CRNN-1 to the baseline, we observe that it outperforms the baseline on the OA (p=0.052), RPA (p=0.0003) and VR (p=0.0015) scores, and achieve those results with a less complex network in terms of network parameters (see Table \ref{tab:network-parameters}). A track-level comparison by computing the overall accuracy differences for each track shows that SF-CRNN-1 performs better on 19 tracks out of 27. 
+
+% For better interpretation of this result, a track-level comparison between SF-CRNN-1 and the baseline is given in Figure~\ref{fig:track-level-performance} by displaying the overall accuracy differences for each track. 
+% It can be observed that  
+The worst OA of SF-CRNN-1 occurs against the baseline with the "MatthewEntwistle\_TheFlaxenField" track where the dominant melody consists only of instruments including Piano.
+The evaluation results for this track are given in Table \ref{tab:metrics-worst-case}. 
+It is observed that both SF-CRNN-1 and baseline have relatively high VFA; however, the effect of this is minimal since the track mostly contains voiced frames. On the other hand, the OA score would be highly \jbcor{effected}{affected} by \jb{the} combination of high RPA and VR scores. For this track,  
+although the baseline and SF-CRNN-1 have comparable VR rates, the RPA score of the baseline is better\jbcor{ that}{, which} explains the difference in OA performance. 
+\begin{table}
+ \begin{center}
+ \begin{tabular}{|r|c|c|c|c|c|}
+  \hline
+            & OA      & RPA    & RCA    & VR     & VFA \\
+  \hline
+  SF-CRNN-1   & 0.444   & 0.595  & 0.677  & 0.556  & 0.423 \\
+  \hline
+  Baseline  & 0.580	  & 0.756  & 0.725  & 0.590  & 0.219 \\  
+  \hline
+  \end{tabular}
+ \end{center}
+ \caption{Evaluation results for the track "MatthewEntwistle\_TheFlaxenField" where the worst OA performance occurs against the baseline \cite{bittner2017_deep}.}
+ \label{tab:metrics-worst-case}
+\end{table}
+
+% Specifically on one track baseline perform nearly 10\% better. 
+% \begin{figure}
+%  \centerline{\framebox{
+%  \includegraphics[width=\columnwidth]{track-level-comparison.png}}}
+%  \caption{Track-level comparison of overall accuracy of Model-1 and baseline \cite{bittner2017_deep} by displaying the difference of overall accuracy between Model-1 and the baseline.}
+%  \label{fig:track-level-performance}
+% \end{figure}
+% % \subsection{Analysis of the overall system}
+
+\vspace{0.15cm}
+\hspace{-0.45cm}\textbf{Singing voice vs. Instrument}\\
+Among the test set in \jbcor{the}{} MedleyDB, 16 tracks contain only instrumental dominant melody, 3 tracks contain only dominant singing voice melody and 8 tracks contain both\footnote{The ratio of the dominant singing voice melody frames and the dominant instrumental melody frames among all voiced frames is 0.238 and 0.762, respectively.}. Evaluation results in Table \ref{tab:vocal-instrument} show that SF-CRNN-1 performs better for singing voice melodies than instrument melodies. SF-CRNN-1 outperforms the baseline in overall accuracy for singing voice melodies and instrument melodies. 
+\begin{table}
+  \begin{center}
+  \begin{tabular}{|l | l l|l l|}
+    \hline
+      \multirow{2}{*}{}& \multicolumn{2}{c}{SF-CRNN-1} &
+      \multicolumn{2}{|c|}{Baseline} \\
+    & S.V. & Ins. & S.V. & Ins.  \\
+    \hline
+    OA & 0.638 & 0.466 & 0.598 & 0.424  \\
+    \hline
+    RPA & 0.791 & 0.647 & 0.784 & 0.619  \\
+    \hline
+    RCA & 0.804 & 0.726 & 0.823 & 0.717  \\
+    \hline
+  \end{tabular}
+  \end{center}	
+  \caption{OA, RPA and RCA scores for singing voice (S.V.) main melody and Instrument (Ins.) main melody for SF-CRNN-1 and baseline.}
+ \label{tab:vocal-instrument}
+\end{table}
+
+
+
+% \subsection{Analysis of $\HFz$ as salience}\label{subsec:analysis-HF0}
+% \secmt{As it is written, actually, I think this had better be placed in 2.1, using more concision. An alternative would be to put it in the beginning of the experimental section}
+% Ideally, a salience function for melody should have a discriminative representation for each target fundamental frequency against the polyphonic background music. In this section, we analyze $\HFz$ representations to see how good they fit to this definition of ``ideal'' salience.   
+
+% As described in Section \ref{subsubsec:Source-Filter-Model}, $\HFz$ has a time-frequency structure similar to CQT in the sense that the frequency bins represent logarithmically spaced fundamental frequencies with a resolution higher than a semitone. We analyze $\HFz$ representations by performing a simple peak picking strategy as in \cite{bittner2017_deep}. Specifically, we choose the frequency with maximum amplitude/salience for each time frame \se{point} as the estimate of the fundamental frequency, then compute the RPA and RCA scores. The STFT is computed with a hop size of $\sim$11ms (256 samples at a 22050Hz sampling rate). We choose the resolution of $\HFz$ as $5$ step notes between each semitone (60 bins per octave), the minimum and maximum frequency in $\HFz$ are chosen as $55Hz$ and $1760Hz$ respectively. The rest of the parameters in the SF-NMF are given in Table~\ref{tab:parameters}\secmt{update}. 
+% % \begin{table}
+% %  \begin{center}
+% %  \begin{tabular}{|l|l|}
+% %   \hline
+% %   \textbf{Parameters} & \textbf{Value} \\
+% %   \hline
+% %   Minimum Frequency   & $55Hz$ \\
+% %   \hline
+% %   Maximum Frequency   & $1760Hz$ \\
+% %   \hline
+% %   Number of $F_0$s    & $301$ \\
+% %   \hline 
+% %   Number of filters ($K$)  & $15$ \\
+% %   \hline
+% %   Number of background basis ($R$)  & $40$ \\
+% %   \hline
+% %   Number of smooth basis ($P$)  & $30$ \\
+% %   \hline
+% %   Number of iterations & $80$ \\
+% %   \hline
+% %  \end{tabular}
+% % \end{center}
+% %  \caption{Parameter setting in the extraction of $\HFz$.}
+% %  \label{tab:parameters}
+% % \end{table}
+
+% To compare $\HFz$ with a standard time-frequency representation in terms of salience, we apply the same analysis to the constant Q-transform (CQT) representations of each song.\footnote{CQT representations are obtained with \emph{yaafe} \cite{yaafe} with 60 bins per octave.} CQT has been widely used for melody extraction \cite{CQTbasedMelodyTracking,bittner2017_deep} and is a more convenient representation than STFT since the CQT scale is coherent with logarithmically spaced note fundamental frequencies. For both $\HFz$ and CQT representations, the RPA and RCA scores are computed for each song in the MedleyDB dataset and the mean RPA and RCA scores with their respective standard deviations are given in Table \ref{tab:HF0-CQT-analysis}. It can be observed that $\HFz$ performs nearly twice as good as CQT representations in both scores which reveals the potential of SF-NMF model to provide a better salience representation for melody compared to simple time-frequency transforms.   
+% \begin{table}
+%  \begin{center}
+%  \begin{tabular}{|l|l|l|}
+%   \hline
+%   \textbf{Metrics-Features} & $\HFz$  & CQT\\
+%   \hline
+%   RPA   & $0.538 \pm 0.141$  & $X$\\
+%   \hline
+%   RCA   & $0.648 \pm 0.127$  & $X$\\
+%   \hline
+%   \end{tabular}
+%  \end{center}
+%  \caption{The comparison of RPA and RCA scores for $\HFz$ feature and CQT feature by simple peak picking method.}
+%  \label{tab:HF0-CQT-analysis}
+% \end{table}
+
+% To analyze the error cases, we compute the confusion matrix for the estimated fundamental frequencies from $\HFz$ in the original resolution. In the confusion matrix given in Figure \ref{fig:Confusion-HF0standard-original-zoomed} (left), we observe that confusions mostly occur in the harmonics of each $F_0$ i.e., note A4 ($440Hz$) is confused with A3 ($220Hz$), A5 ($880Hz$) and E6 ($1320Hz$). Besides these expected type of errors, we also observed a repeating confusion structure with a period of step notes that occurs at seminotes that can be seen from Figure \ref{fig:Confusion-HF0standard-original-zoomed} (right). In other words, every seminote is actually confused with nearly every other seminote. One explanation to this structure is that the background NMF model $\WB\HB$ in the model in (\ref{eqn:SF-Model-SIMM}), is not able to describe the polyphonic background good enough and as a result $\HFz$ picks some harmonic structure from the background. 
+% % \begin{figure}        
+% %         \centering
+% %         \begin{subfigure}{.49\columnwidth}
+% %             \centering            
+% %             \includegraphics[width=1.1\columnwidth]{HF0-standard_RPA_iterations_AClassicEducation_NightOwl.png}
+% % %             \caption{Raw Pitch Accuracy through iterations of multiplicative updates of SF-NMF}
+% %         \end{subfigure}
+% %         \hfill
+% %         \begin{subfigure}{.49\columnwidth}
+% %             \centering            
+% %             \includegraphics[width=1.1\columnwidth]{HF0-standard_IS_iterations_AClassicEducation_NightOwl}
+% % %             \caption{IS divergence through iterations of multiplicative updates of SF-NMF}
+% % %             \begin{minipage}{.1cm}
+% % %             \vfill
+% % %             \end{minipage}
+% %         \end{subfigure} 
+% %         \caption{The evolution of  RPA and RCA (left) and IS-divergence (right) through iterations of multiplicative updates of SF-NMF}
+% %         \label{fig:RPA-IS-iterations}
+% % \end{figure}
+% \begin{figure}
+% 	\centering
+%     \begin{subfigure}[t]{.49\columnwidth}
+%         \centering
+%         \includegraphics[width=1.1\columnwidth]{confusion_matrix_based_on_HF0_original_comp.png}
+%         \caption{Original}
+%     \end{subfigure}%
+%     \hfill
+% 	\begin{subfigure}[t]{.49\columnwidth}
+%         \centering
+%         %\includegraphics[height=1.6in]{Fingerprinting_FP_FN1_FN2_vs_threshold.png}
+%         \includegraphics[width=1.1\columnwidth]{confusion_matrix_based_on_HF0_original_comp_zoomed.png}
+%         \caption{Zoomed}
+%     \end{subfigure}
+%     \caption{Confusion matrix between fundamental frequencies with a resolution of 5 step notes; 5 fundamental frequencies in one semitone interval.}
+%     \label{fig:Confusion-HF0standard-original-zoomed}	
+% \end{figure}
+% % \begin{figure}
+% %  \centerline{\framebox{
+% %  \includegraphics[width=\columnwidth]{confusion_matrix_based_on_HF0_original_comp.png}}}
+% %  \caption{Confusion matrix between fundamental frequencies with a resolution of 5 step notes}
+% %  \label{fig:Confusion-HF0standard-5step_notes}
+% % \end{figure}
+% % \begin{figure}
+% %  \centerline{\framebox{
+% %  \includegraphics[width=\columnwidth]{confusion_matrix_based_on_HF0.png}}}
+% %  \caption{Confusion matrix between fundamental frequencies in the semitone resolution}
+% %  \label{fig:Confusion-HF0standard-semitone}
+% % \end{figure}
+
+% \secmt{I would drop the following including the discussion on convergence, not novel and out of scope}To explore the usefulness of $\HFz$ representations for temporal pitch tracking, we applied thresholding on the erroneous melody frames with a $1st$ quartile threshold. We observed that over $99\%$ of the erroneous frames have high enough energy at the ground-truth frequency, that suggests temporal tracking methods might further increase the performance by correcting some of these errors.  
+
+% % Note that in most of the melody extraction algorithms, salience representation is followed by a tracking stage in temporal/time dimension.
+% % In \cite{Durrieu}, a Hidden Markov Model (HMM) is proposed following the extraction of $\HFz$ to further exploit the temporal structure in the melody. According to the results reported in \cite{bittner2016_comparison} on MedleyDB dataset, this method performs a mean RPA score of 0.65 and a mean RCA score of 0.73\footnote{The results in \cite{bittner2016_comparison} are given as the mean score of several train/test splits, not on the whole dataset.}. It is clear that a temporal tracking of melody on the salience representation helps increasing the estimation performance of the melody. To further investigate this claim, we applied thresholding on the erroneous melody frames with a $1st$ quartile threshold. We observed that over $99\%$ of the erroneous frames have high enough energy at the ground-truth frequency that might explain why the performance increases with a temporal analysis. 
+
+% % \subsection{Enhancing $\HFz$ representation as salience}
+% In \cite{Durrieu}, it has been reported that the melody estimation performance is actually getting worse after some iterations i.e. 30 iterations, although the model is actually converging. To illustrate this issue, we apply a similar peak picking analysis at each iteration of updates i.e., we compute the RPA at each iteration. We observe that for some songs the performance is stable however for some songs the performance is actually decreasing. An example is given in Figure \ref{fig:RPA-IS-iterations} where the evolution of RPA score and the IS-divergence through $100$ iterations is illustrated for a single song\footnote{The song chosen is "AClassicEducation$\_$NightOwl" which has the dominant melody easily identifiable by listening.}. It can be observed that although the total divergence is decreasing, that does not necessarily require for $\HFz$ to converge to a better representation as salience. One explanation for this phenomenon is given in \cite{Durrieu} as wrong/different instrumentation tuning that does not match the representations in the excitation basis $\WFz$. Such a different tuning might cause melody to be better described by the additive background NMF model. 
+
+% \begin{figure}
+%  \centerline{\framebox{
+%  \includegraphics[width=\columnwidth]{HF0-standard_RPA_iterations_AClassicEducation_NightOwl.png}}}
+%  \caption{Raw Pitch Accuracy through iterations of multiplicative updates of SF-NMF}
+%  \label{fig:RPA-iterations}
+% \end{figure}
+
+% \begin{figure}        
+%         \centering
+%         \begin{subfigure}{.49\columnwidth}
+%             \centering            
+%             \includegraphics[width=1.1\columnwidth]{HF0-standard_RPA_iterations_AClassicEducation_NightOwl.png}
+% %             \caption{Raw Pitch Accuracy through iterations of multiplicative updates of SF-NMF}
+%         \end{subfigure}
+%         \hfill
+%         \begin{subfigure}{.49\columnwidth}
+%             \centering            
+%             \includegraphics[width=1.1\columnwidth]{HF0-standard_IS_iterations_AClassicEducation_NightOwl}
+% %             \caption{IS divergence through iterations of multiplicative updates of SF-NMF}
+% %             \begin{minipage}{.1cm}
+% %             \vfill
+% %             \end{minipage}
+%         \end{subfigure} 
+%         \caption{The evolution of  RPA and RCA (left) and IS-divergence (right) through iterations of multiplicative updates of SF-NMF}
+%         \label{fig:RPA-IS-iterations}
+% \end{figure}
+
+\section{Conclusions and Future Work} \label{sec:Conclusion}
+
+In this work, \se{we have introduced a novel audio-based dominant melody estimation architecture using
+source-filter NMF as \jbcor{a pre-training}{pretraining} for a new variant of deep network for this task, namely a CNN-BiGRU scheme}. We have \jbcor{showed}{shown} that the proposed system achieves state-of-the-art performance on standard evaluation metrics, \se{even significantly improving \jb{on} it while maintaining a lower system complexity}. 
+
+Analysis \jbcor{on}{of} $\HFz$ as a salience representation shows that it provides a good initial salience in general with high RPA and RCA, even \secor{with}{when performing} melody estimation using frame-based \se{salience} peak-picking. The evaluation results clearly show the usefulness of SF-NMF-based pretraining in many aspects. We observe that \jbcor{provided}{when provided with} a good initial salience input to the CRNN structure, the system performs considerably \jbcor{well}{better} without requiring any augmentation or additional training data. This encourages the idea of improving the pretraining part to obtain even more discriminative salience representations which will surely increase the melody estimation performance. For such improvements, SF-NMF is a good candidate since many other variants with various constraints such as smoothness or sparsity exist in the literature. 
+
+We observe that in the proposed CRNN structure, \jb{the} CNN stage help\gp{s} \jbcor{improving}{to improve} the quality of the salience representation against $\HFz$. In addition,
+% to that,
+exploiting temporal information with \jbcor{RNN stage}{the RNN} significantly improves OA, RPA, RCA and VR. These two stages act similar\jb{ly} to an encoder scheme and the classification layer acts as the decoder. Therefore one can interpret the proposed CRNN as an encoder-decoder \jbcor{type of}{} network where the encoder is used to obtain an enhanced salience representation and the decoder produces a frame-based transcription.
+
+From a \se{melody} classification viewpoint, the MedleyDB dataset is quite challenging due to \jb{its} diverse range of instrumentation and music genres. \jbcor{involved.}{} Also, there is an imbalance between the note classes and \jbcor{between}{the} non-melody class in the \jbcor{MedleyDB}{} dataset. The CRNN network has proven effective in handling such imbalance when pretrained with \jb{an} SF-NMF model. 
+% with a pretrained inputwithout using any augmentation methods or large (and more balanced) datasets.  
+
+A clear future direction to pursue is training the SF-NMF and CRNN \jbcor{network}{} jointly, learning \jb{the} $\HFz$ representation while minimizing the classification error. 
+
+\section{ACKNOWLEDGEMENT}
+This project is partly funded by \jb{the} \emph{DigThatLick} project. We'd like to thank Rachel Bittner, Dr. Umut Simsekli and Dr. Jordan Smith for their valuable technical support. 
+% SE: Don't reveal too many details about future work %A relatively easy way to obtain such a joint training is to design an end-to-end CRNN system where the first few layers represent the SF-NMF estimation. Such a representation for standard NMF is given in \cite{neuralNMF} using autoencoder-decoder architecture.   
+% For bibtex users:
+\bibliography{ISMIRtemplate}
+
+% For non bibtex users:
+%\begin{thebibliography}{citations}
+%
+%\bibitem {Author:00}
+%E. Author.
+%``The Title of the Conference Paper,''
+%{\it Proceedings of the International Symposium
+%on Music Information Retrieval}, pp.~000--111, 2000.
+%
+%\bibitem{Someone:10}
+%A. Someone, B. Someone, and C. Someone.
+%``The Title of the Journal Paper,''
+%{\it Journal of New Music Research},
+%Vol.~A, No.~B, pp.~111--222, 2010.
+%
+%\bibitem{Someone:04} X. Someone and Y. Someone. {\it Title of the Book},
+%    Editorial Acme, Porto, 2012.
+%
+%\end{thebibliography}
+
+ \end{document}

@@ -1,0 +1,1 @@
+Parameters:    Fs: 22050    hop_size: 256    step_notes: 5    R: 40.0    K: 10    nb_iterations: 40
