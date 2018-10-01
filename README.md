@@ -51,4 +51,10 @@ To train the model on the random splitted dataset, you can run the script
 
 Note that if you want to use a GPU for the training part (probably you should), you would need to adjust the code for that purpose!
 
+## Requirements
+
+The required packages for the environment in the CRNN experiments are given in the requirements.txt file. Note that the main packages needed are
+
+> tensorflow_gpu, keras, pandas, numpy, scipy, scikit-learn, librosa, mir_eval, matplotlib, h5py, 
+
 
