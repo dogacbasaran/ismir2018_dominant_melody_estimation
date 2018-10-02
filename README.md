@@ -25,7 +25,11 @@ To compute dominant melody estimation with the trained CRNN model, you can run t
 
 > predict/predict_on_single_audio_CRNN.py 
 
-An example usage exists inside the script. 
+An example usage exists inside the script. An executable version of the prediction code is also available in the codeocean platform with the following link,
+
+> https://codeocean.com/2018/10/01/main-melody-extraction-with-source-filter-nmf-and-crnn/code
+
+Feel free to play with it!
 
 ## Source-Filter NMF training
 
