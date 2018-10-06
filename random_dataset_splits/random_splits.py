@@ -210,56 +210,6 @@ def get_labels(track_name):
     return labels
 
 
-
-# def get_path_to_dataset_annotations(dataset):
-#     if dataset == 'medleydb':
-#         dataset_path = '{0}/pickles'.format(get_path(dataset_name=dataset))
-#     elif dataset == 'jazzomat':
-#         dataset_path = '{0}/jazzomat_annotations/frame_basis'.format(get_path(dataset_name=dataset))
-#
-#     return dataset_path
-#
-#
-# def get_labels(dataset_name, track_name):
-#     if dataset_name == 'medleydb':
-#         annotation_path = get_path_to_dataset_annotations(
-#             dataset_name) + '/{0}_quantized_labels_Fs-22050_hop-256.h5'.format(
-#             track_name)
-#         labels_file = h5py.File(annotation_path, 'r')
-#         labels = np.array(labels_file['labels'])
-#
-#         return labels
-#     elif dataset_name == 'jazzomat':
-#         annotation_path = get_path_to_dataset_annotations(
-#             dataset_name) + '/{0}_frame.h5'.format(
-#             track_name)
-#         labels_file = h5py.File(annotation_path, 'r')
-#         labels = np.array(labels_file['labels'])
-#
-#         return labels
-#
-#
-# def get_path(dataset_name):
-#     if dataset_name == 'medleydb':
-#         path = '/home/basaran/Dropbox/IRCAM/medleydb'
-#     elif dataset_name == 'jazzomat':
-#         path = '/home/basaran/Dropbox/IRCAM/jazzomat'
-#
-#     return path
-#
-#
-# def get_dataset_splits_save_path(dataset_name):
-#     if dataset_name == 'medleydb':
-#         dataset_splits_save_path = '{0}/medleydb_dataset_splits'.format(get_path(dataset_name=dataset_name))
-#     elif dataset_name == 'jazzomat':
-#         dataset_splits_save_path = '{0}/jazzomat_dataset_splits'.format(get_path(dataset_name=dataset_name))
-#
-#     if not os.path.exists(dataset_splits_save_path):
-#         os.makedirs(dataset_splits_save_path)
-#
-#     return dataset_splits_save_path
-
-
 def get_medleydb_list():
     """Gets the list of songs in the Medley-dB dataset. Only the songs with annotations are chosen.
 
@@ -275,29 +225,6 @@ def get_medleydb_list():
 
     return track_list
 
-
-# def get_jazzomat_list():
-#     path = get_path(dataset_name='jazzomat')
-#
-#     track_list_full_path = glob.glob('{0}/jazzomat_annotations/frame_basis/*.csv'.format(path))
-#     track_list = [os.path.basename(track).split('_Solo')[0] for track in track_list_full_path]
-#
-#     return track_list
-
-
-# def get_hf0_path(dataset_name):
-#     if dataset_name == 'medleydb':
-#         # path = '{0}/medleydb_features/HF0s_STFT/STFTbins_1025_stepNotes_5/80iter_30atomfilters/mixdowns'.format(
-#         #     get_path(dataset_name=dataset_name))
-#         path = '{0}/medleydb_features/HF0s_STFT/STFTbins_513_stepNotes_5/40iter_30atomfilters_5backgroundBasis/mixdowns'.format(
-#             get_path(dataset_name=dataset_name))
-#     elif dataset_name == 'jazzomat':
-#         path = '{0}/jazzomat_features/HF0s_STFT/STFTbins_513_stepNotes_5/40iter_30atomfilters_5backgroundBasis/mixdowns'.format(
-#             get_path(dataset_name=dataset_name))
-#
-#     return path
-#
-#
 def get_cqt_path():
     path = '{0}/medleydb_features/CQT'.format(get_path())
 
@@ -631,6 +558,4 @@ def generate_dataset_splits(args):
 
 if __name__ == '__main__':
     args = parse_input(sys.argv[1:])
-    # args = parse_input(['-v', '--splits-file-path', '/home/basaran/Dropbox/IRCAM/dataset-ismir-splits.json'])
-    # args = parse_input(['-v', '--dataset-name','jazzomat','--dataset-number','2'])
     generate_dataset_splits(args=args)

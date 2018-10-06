@@ -213,47 +213,4 @@ def get_annotation_and_estimation(track_name):
     # Pitch Estimation
     pitch_estimation = get_pitch_estimation_from_csv(track_name=track_name)
 
-    # plot_annotation_vs_estimation(track_name=track_name, annotation=annotation, pitch_estimation=pitch_estimation,
-    #                               args=args)
-
     return annotation, pitch_estimation
-
-# This comparison works only for jazzomat dataset
-if __name__ == '__main__':
-
-    ####
-    # ChrisPotter_Arjuna_Solo
-    # ChrisPotter_PopTune#1_Solo
-    # ColemanHawkins_Stompin'AtTheSavoy_Solo
-    # JohnColtrane_GiantSteps-2_Solo
-    #
-    # KennyDorham_Doodlin'_Solo
-    # SonnyRollins_I'llRememberApril_Solo
-    #
-    # KennyWheeler_PassItOn_Solo!!!!
-    # SteveLacy_Let'sCoolOne_Solo!!!!
-    #
-    # ArtPepper_Anthropology_Solo
-    # BennyCarter_SweetLorraine_Solo
-    # BixBeiderbecke_RoyalGardenBlues_Solo
-    # BuckClayton_DestinationK.C._Solo
-    # DexterGordon_Montmartre_Solo
-    # JohnColtrane_Impressions_1963_Solo
-
-    # BenWebster_ByeByeBlackbird_Solo
-    # BenWebster_DidYouCallHerToday_Solo
-    # BenWebster_MyIdeal_Solo
-
-    ####
-
-    # track_name = 'JoeLovano_Work_Solo'
-    track_name = "BenWebster_MyIdeal_Solo"
-
-    args = read_arguments(['model1.py'])
-
-    annotation = get_annotation(track_name=track_name)
-
-    pitch_estimation = get_pitch_estimation_from_csv(dataset_name='jazzomat', track_name=track_name, args=args)
-
-    plot_annotation_vs_estimation(track_name=track_name, annotation=annotation, pitch_estimation=pitch_estimation,
-                                  args=args)
