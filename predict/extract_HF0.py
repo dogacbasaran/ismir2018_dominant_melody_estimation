@@ -34,7 +34,7 @@ def get_hf0_save_path(dataset_name):
     if dataset_name == 'medleydb':
         hf0_save_path = '{0}/medleydb_features/HF0s_STFT'.format(get_path())
     else:
-        hf0_save_path = os.path.realpath(__file__)
+        hf0_save_path = os.path.dirname(os.path.realpath(__file__))
 
     if not os.path.exists(hf0_save_path):
         os.makedirs(hf0_save_path)
