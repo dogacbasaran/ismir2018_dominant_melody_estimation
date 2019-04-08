@@ -13,6 +13,7 @@ import keras as K
 
 import h5py
 import os
+import click
 from sklearn.preprocessing import LabelBinarizer, normalize
 import csv
 import pandas as pd
@@ -418,7 +419,10 @@ def get_evaluation_results_statistics(voicing_recall,
     return evaluation_results_statistics
 
 
-def main_prediction(file_path, evaluate_results=False):
+@click.command()
+@click.argument('file_path', type=click.Path(exists=True))
+@click.argument('output_path', type=click.Path())
+def main_prediction(file_path, output_path, evaluate_results=False):
     '''
     main function to estimate melody from SF-NMF activations of a track. If the dataset is indicated, then the estimated
     pitch values are also evaluated. Note that the system here is trained with MedleyDB alone.
@@ -435,7 +439,7 @@ def main_prediction(file_path, evaluate_results=False):
             feats = h5py.File(HF0_fpath, 'r')
             HF0 = np.array(feats['HF0'])
 
-        track_name = os.path.basename(HF0_fpath).split('.h5')[0]
+        # track_name = os.path.basename(HF0_fpath).split('.h5')[0]
 
     except:
         raise RuntimeError('Wav file or HF0 file could not be loaded!')
@@ -454,28 +458,28 @@ def main_prediction(file_path, evaluate_results=False):
 
     ## Save the estimations to a csv file
     try:
-        output_path = '{0}/{1}.csv'.format(get_model_output_save_path(),
-                                           track_name)
+        # output_path = '{0}/{1}.csv'.format(get_model_output_save_path(),
+        #                                    track_name)
         save_output(pitch_estimates, output_path)
     except:
-        output_path = '{0}.csv'.format(track_name)
+        # output_path = '{0}.csv'.format(track_name)
         save_output(pitch_estimates, output_path)
 
     ## Evaluate the results if annotations are available
-    try:
-        if evaluate_results:
-            evaluation_results = evaluate_melody_prediction(track_name=track_name,
-                                                            pitch_estimates=pitch_estimates,
-                                                            verbose=True)
-        return evaluation_results
-    except:
-        raise RuntimeError('An error occured in the evaluation!')
+    # try:
+    #     if evaluate_results:
+    #         evaluation_results = evaluate_melody_prediction(track_name=track_name,
+    #                                                         pitch_estimates=pitch_estimates,
+    #                                                         verbose=True)
+    #     return evaluation_results
+    # except:
+    #     raise RuntimeError('An error occured in the evaluation!')
 
 
 if __name__ == '__main__':
     # Example usage:
-    track_name = 'AClassicEducation_NightOwl'
-    HF0_fpath = '{0}/{1}.h5'.format(get_hf0_path(),track_name)
-    audio_fpath = '{0}/{1}.wav'.format(get_path_to_dataset_audio(),track_name)
+    # track_name = 'AClassicEducation_NightOwl'
+    # HF0_fpath = '{0}/{1}.h5'.format(get_hf0_path(),track_name)
+    # audio_fpath = '{0}/{1}.wav'.format(get_path_to_dataset_audio(),track_name)
 
-    main_prediction(file_path=audio_fpath, evaluate_results=True)
+    main_prediction()

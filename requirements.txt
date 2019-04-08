@@ -139,3 +139,4 @@ zeromq                    4.2.5                hf484d3e_1
 zlib                      1.2.11               ha838bed_2  
 zope                      1.0                      py36_0  
 zope.interface            4.5.0            py36h14c3975_0  
+click                     6.7                       <pip>
